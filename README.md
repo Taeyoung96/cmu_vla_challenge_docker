@@ -36,7 +36,7 @@ If you have successfully created the docker container, the terminal output will 
 root@taeyoung-cilab:~/catkin_ws#
 ```
 
-**3. Build and run GRIL-Calib**
+**3. Build and run cmu_vla_challenge**
 
 Inside the docker container, build and run the package.  
 ```
