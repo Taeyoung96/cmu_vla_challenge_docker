@@ -64,5 +64,5 @@ rosbag record -o robot1 /camera/image /camera/semantic_image /semantic_scan /tf 
 
 **2. Using script to add namespace to bag file**  
 
-
+In another terminal, turn on `roscore` and run `python bag/rosbag_namespace.py`
 
