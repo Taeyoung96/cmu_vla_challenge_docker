@@ -1,0 +1,8 @@
+<launch>
+
+  <node pkg="sensor_scan_generation" type="sensorScanGeneration" name="sensorScanGeneration" output="screen" required="true">
+    <remap from="/sensor_scan" to="sensor_scan"/>
+    <remap from="/state_estimation_at_scan" to="state_estimation_at_scan"/>
+  </node>
+
+</launch>
