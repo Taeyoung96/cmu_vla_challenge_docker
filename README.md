@@ -1,6 +1,8 @@
 # CMU VLA challenge  
 
-This repository is heavily adapted from [jizhang-cmu/cmu_vla_challenge_unity](https://github.com/jizhang-cmu/cmu_vla_challenge_unity)  
+This repository is heavily adapted from [jizhang-cmu/cmu_vla_challenge_unity](https://github.com/jizhang-cmu/cmu_vla_challenge_unity).  
+
+For detailed repository setup, see [jizhang-cmu/cmu_vla_challenge_unity](https://github.com/jizhang-cmu/cmu_vla_challenge_unity).
 
 ## Make Docker environment  
 
