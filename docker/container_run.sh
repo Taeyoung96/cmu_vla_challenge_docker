@@ -25,13 +25,12 @@ xhost +local:docker
 
 # Launch the nvidia-docker container with the provided image name and tag
 docker run --privileged -it \
-           --runtime=nvidia \
            --gpus all \
-           --cpus="24" \
+           --cpus="16" \
            -e NVIDIA_DRIVER_CAPABILITIES=all \
            -e NVIDIA_VISIBLE_DEVICES=all \
            --volume="$PROJECT_DIR:/root/catkin_ws/src" \
-           --volume="/home/multirobot1/Desktop/taeyoung/data:/root/data" \
+           --volume="/home/beom/Desktop/multirobot/data:/root/data" \
            --volume=/tmp/.X11-unix:/tmp/.X11-unix:rw \
            --net=host \
            --ipc=host \

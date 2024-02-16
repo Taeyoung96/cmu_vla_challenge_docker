@@ -48,9 +48,9 @@ def add_namespace_to_topics(input_bag_path, output_bag_path, namespace):
 
 if __name__ == "__main__":
     rospy.init_node('bag_namespace_adder', anonymous=True)
-    input_bag_path = '/root/catkin_ws/src/bag/robot2_2024-01-13-09-49-21.bag'  # Original bag file path (absolute path inside the docker container)
-    output_bag_path = '/root/catkin_ws/src/bag/robot2.bag'  # Result bag file path (absolute path inside the docker container)
-    namespace = 'robot2'  # Add namespace
+    input_bag_path = '/root/catkin_ws/src/cmu_vla_challenge_unity/robot1_2024-02-05-07-45-02.bag'  # Original bag file path (absolute path inside the docker container)
+    output_bag_path = '/root/catkin_ws/src/bag/robot1.bag'  # Result bag file path (absolute path inside the docker container)
+    namespace = 'robot1'  # Add namespace
 
     add_namespace_to_topics(input_bag_path, output_bag_path, namespace)
     print("Bag file with added namespace is saved as {}".format(output_bag_path))
