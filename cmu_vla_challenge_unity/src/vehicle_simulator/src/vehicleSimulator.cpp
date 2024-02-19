@@ -34,7 +34,8 @@ using namespace std;
 
 const double PI = 3.1415926;
 const float gravity_acc = 9.81;
-const int frequency = 100;
+const double frequency = 100.0;
+double dt = 1.0 / frequency;
 
 double sensorOffsetX = 0;
 double sensorOffsetY = 0;
@@ -275,23 +276,30 @@ int main(int argc, char** argv)
 
     vehicleRoll = terrainRoll * cos(vehicleYaw) + terrainPitch * sin(vehicleYaw);
     vehiclePitch = -terrainRoll * sin(vehicleYaw) + terrainPitch * cos(vehicleYaw);
-    vehicleYaw += 0.005 * vehicleYawRate;
+    // vehicleYaw += 0.005 * vehicleYawRate;
+    vehicleYaw += frequency * vehicleYawRate;
     if (vehicleYaw > PI)
       vehicleYaw -= 2 * PI;
     else if (vehicleYaw < -PI)
       vehicleYaw += 2 * PI;
 
-    vehicleX += 0.005 * cos(vehicleYaw) * vehicleSpeed +
-                0.005 * vehicleYawRate * (-sin(vehicleYaw) * sensorOffsetX - cos(vehicleYaw) * sensorOffsetY);
-    vehicleY += 0.005 * sin(vehicleYaw) * vehicleSpeed +
-                0.005 * vehicleYawRate * (cos(vehicleYaw) * sensorOffsetX - sin(vehicleYaw) * sensorOffsetY);
+    vehicleX += frequency * cos(vehicleYaw) * vehicleSpeed +
+                frequency * vehicleYawRate * (-sin(vehicleYaw) * sensorOffsetX - cos(vehicleYaw) * sensorOffsetY);
+    vehicleY += frequency * sin(vehicleYaw) * vehicleSpeed +
+                frequency * vehicleYawRate * (cos(vehicleYaw) * sensorOffsetX - sin(vehicleYaw) * sensorOffsetY);
+
+    // vehicleX += 0.005 * cos(vehicleYaw) * vehicleSpeed +
+    //             0.005 * vehicleYawRate * (-sin(vehicleYaw) * sensorOffsetX - cos(vehicleYaw) * sensorOffsetY);
+    // vehicleY += 0.005 * sin(vehicleYaw) * vehicleSpeed +
+    //             0.005 * vehicleYawRate * (cos(vehicleYaw) * sensorOffsetX - sin(vehicleYaw) * sensorOffsetY);
     vehicleZ = terrainZ + vehicleHeight;
 
     ros::Time odomTimeRec = odomTime;
     odomTime = ros::Time::now();
-    if (odomTime == odomTimeRec) odomTime += ros::Duration(0.005);
+    // if (odomTime == odomTimeRec) odomTime += ros::Duration(0.005);
+    if (odomTime == odomTimeRec) odomTime += ros::Duration(dt);
 
-    // publish 200Hz odometry messages
+    // publish 100, 200(x)Hz odometry messages
     geometry_msgs::Quaternion geoQuat = tf::createQuaternionMsgFromRollPitchYaw(vehicleRoll, vehiclePitch, vehicleYaw);
 
     odomData.header.stamp = odomTime;
@@ -299,11 +307,15 @@ int main(int argc, char** argv)
     odomData.pose.pose.position.x = vehicleX;
     odomData.pose.pose.position.y = vehicleY;
     odomData.pose.pose.position.z = vehicleZ;
-    odomData.twist.twist.angular.x = 200.0 * (vehicleRoll - vehicleRecRoll);
-    odomData.twist.twist.angular.y = 200.0 * (vehiclePitch - vehicleRecPitch);
+    // odomData.twist.twist.angular.x = 200.0 * (vehicleRoll - vehicleRecRoll);
+    // odomData.twist.twist.angular.y = 200.0 * (vehiclePitch - vehicleRecPitch);
+    odomData.twist.twist.angular.x = frequency * (vehicleRoll - vehicleRecRoll);
+    odomData.twist.twist.angular.y = frequency * (vehiclePitch - vehicleRecPitch);
+
     odomData.twist.twist.angular.z = vehicleYawRate;
     odomData.twist.twist.linear.x = vehicleSpeed;
-    odomData.twist.twist.linear.z = 200.0 * (vehicleZ - vehicleRecZ);
+    // odomData.twist.twist.linear.z = 200.0 * (vehicleZ - vehicleRecZ);
+    odomData.twist.twist.linear.z = frequency * (vehicleZ - vehicleRecZ);
     pubVehicleOdom.publish(odomData);
 
     // publish 200Hz tf messages
@@ -320,7 +332,7 @@ int main(int argc, char** argv)
     tfBroadcaster.sendTransform(imuTrans);
 
     // agular vel
-    float dt = 0.005;
+    // float dt = 0.005;
     // Divide by dt, instead multiply 200 
     imuData.angular_velocity.x = (vehicleRoll - vehicleRecRoll) / dt;    // 200times : rad/s
     imuData.angular_velocity.y = (vehiclePitch - vehicleRecPitch) / dt;
