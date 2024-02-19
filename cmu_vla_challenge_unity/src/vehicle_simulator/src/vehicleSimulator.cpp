@@ -33,6 +33,8 @@
 using namespace std;
 
 const double PI = 3.1415926;
+const float gravity_acc = 9.81;
+const int frequency = 100;
 
 double sensorOffsetX = 0;
 double sensorOffsetY = 0;
@@ -69,6 +71,15 @@ float vehicleSpeed = 0;
 float terrainZ = 0;
 float terrainRoll = 0;
 float terrainPitch = 0;
+
+// float previousVehicleSpeed = 0;
+float previousXPositionChange = 0;
+float previousYPositionChange = 0;
+float previousZPositionChange = 0;
+
+float previousXVelocity =0;
+float previousYVelocity =0;
+float previousZVelocity =0;
 
 pcl::VoxelGrid<pcl::PointXYZI> terrainDwzFilter;
 
@@ -225,14 +236,22 @@ int main(int argc, char** argv)
 
   ros::Publisher pubVehicleOdom = nh.advertise<nav_msgs::Odometry>("/state_estimation", 5);
 
+  ros::Publisher pubImu = nh.advertise<sensor_msgs::Imu>("/imu_raw", 1);
+
+
   nav_msgs::Odometry odomData;
   odomData.header.frame_id = "map";
   odomData.child_frame_id = "sensor";
+  
 
   tf::TransformBroadcaster tfBroadcaster;
   tf::StampedTransform odomTrans;
   odomTrans.frame_id_ = "map";
   odomTrans.child_frame_id_ = "sensor";
+  
+  tf::StampedTransform imuTrans;
+  imuTrans.frame_id_ = "sensor";
+  imuTrans.child_frame_id_ = "imu_link";
 
   ros::Publisher pubModelState = nh.advertise<geometry_msgs::PoseStamped>("/unity_sim/set_model_state", 5);
   geometry_msgs::PoseStamped robotState;
@@ -242,7 +261,7 @@ int main(int argc, char** argv)
 
   printf("\nSimulation started.\n\n");
 
-  ros::Rate rate(200);
+  ros::Rate rate(frequency);
   bool status = ros::ok();
   while (status)
   {
@@ -250,6 +269,8 @@ int main(int argc, char** argv)
 
     float vehicleRecRoll = vehicleRoll;
     float vehicleRecPitch = vehiclePitch;
+    float vehicleRecX = vehicleX;
+    float vehicleRecY = vehicleY;
     float vehicleRecZ = vehicleZ;
 
     vehicleRoll = terrainRoll * cos(vehicleYaw) + terrainPitch * sin(vehicleYaw);
@@ -290,6 +311,43 @@ int main(int argc, char** argv)
     odomTrans.setRotation(tf::Quaternion(geoQuat.x, geoQuat.y, geoQuat.z, geoQuat.w));
     odomTrans.setOrigin(tf::Vector3(vehicleX, vehicleY, vehicleZ));
     tfBroadcaster.sendTransform(odomTrans);
+
+    // Generate IMU data
+    sensor_msgs::Imu imuData;
+    imuData.header.stamp = odomTime;
+    imuTrans.setRotation(tf::Quaternion(0.0, 0.0, 0.0, 1.0)); //추가
+    imuTrans.setOrigin(tf::Vector3(0.0, 0.0, 0.0));
+    tfBroadcaster.sendTransform(imuTrans);
+
+    // agular vel
+    float dt = 0.005;
+    // Divide by dt, instead multiply 200 
+    imuData.angular_velocity.x = (vehicleRoll - vehicleRecRoll) / dt;    // 200times : rad/s
+    imuData.angular_velocity.y = (vehiclePitch - vehicleRecPitch) / dt;
+    imuData.angular_velocity.z = vehicleYawRate;
+
+    // linear acc
+    // imuData.linear_acceleration.x = (vehicleSpeed - previousVehicleSpeed) / dt;
+    // imuData.linear_acceleration.y = 0.0;  // Assuming no lateral acceleration
+    // imuData.linear_acceleration.z = ((vehicleZ - vehicleRecZ) / dt - previousVerticalPositionChange / dt) / dt;
+
+    // Using previous state
+    imuData.linear_acceleration.x = ( ( (vehicleX - vehicleRecX) / dt ) -  previousXVelocity ) / dt;
+    imuData.linear_acceleration.y = ( ( (vehicleY - vehicleRecY) / dt ) -  previousYVelocity ) / dt;
+    imuData.linear_acceleration.z = ( ( (vehicleZ - vehicleRecZ) / dt ) -  previousZVelocity ) / dt + gravity_acc;
+
+    imuData.orientation.x = 0; 
+    imuData.orientation.y = 0;
+    imuData.orientation.z = 0;
+    imuData.orientation.w = 1;
+
+    // previousVehicleSpeed = vehicleSpeed;
+    previousXVelocity = (vehicleX - vehicleRecX) / dt;
+    previousYVelocity = (vehicleY - vehicleRecY) / dt;
+    previousZVelocity = (vehicleZ - vehicleRecZ) / dt;
+
+    // publish IMU raw data 
+    pubImu.publish(imuData);
 
     // publish 200Hz Unity model state messages (this is for Unity simulation)
     robotState.header.stamp = odomTime;
