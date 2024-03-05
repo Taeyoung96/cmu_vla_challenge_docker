@@ -1,3 +1,4 @@
+
 #include <math.h>
 #include <time.h>
 #include <stdio.h>
@@ -276,30 +277,30 @@ int main(int argc, char** argv)
 
     vehicleRoll = terrainRoll * cos(vehicleYaw) + terrainPitch * sin(vehicleYaw);
     vehiclePitch = -terrainRoll * sin(vehicleYaw) + terrainPitch * cos(vehicleYaw);
-    // vehicleYaw += 0.005 * vehicleYawRate;
-    vehicleYaw += frequency * vehicleYawRate;
+    vehicleYaw += dt * vehicleYawRate;
     if (vehicleYaw > PI)
       vehicleYaw -= 2 * PI;
     else if (vehicleYaw < -PI)
       vehicleYaw += 2 * PI;
 
-    vehicleX += frequency * cos(vehicleYaw) * vehicleSpeed +
-                frequency * vehicleYawRate * (-sin(vehicleYaw) * sensorOffsetX - cos(vehicleYaw) * sensorOffsetY);
-    vehicleY += frequency * sin(vehicleYaw) * vehicleSpeed +
-                frequency * vehicleYawRate * (cos(vehicleYaw) * sensorOffsetX - sin(vehicleYaw) * sensorOffsetY);
-
     // vehicleX += 0.005 * cos(vehicleYaw) * vehicleSpeed +
     //             0.005 * vehicleYawRate * (-sin(vehicleYaw) * sensorOffsetX - cos(vehicleYaw) * sensorOffsetY);
     // vehicleY += 0.005 * sin(vehicleYaw) * vehicleSpeed +
     //             0.005 * vehicleYawRate * (cos(vehicleYaw) * sensorOffsetX - sin(vehicleYaw) * sensorOffsetY);
+    // vehicleZ = terrainZ + vehicleHeight;
+
+
+    vehicleX += dt * cos(vehicleYaw) * vehicleSpeed +
+                dt * vehicleYawRate * (-sin(vehicleYaw) * sensorOffsetX - cos(vehicleYaw) * sensorOffsetY);
+    vehicleY += dt * sin(vehicleYaw) * vehicleSpeed +
+                dt * vehicleYawRate * (cos(vehicleYaw) * sensorOffsetX - sin(vehicleYaw) * sensorOffsetY);
     vehicleZ = terrainZ + vehicleHeight;
 
     ros::Time odomTimeRec = odomTime;
     odomTime = ros::Time::now();
-    // if (odomTime == odomTimeRec) odomTime += ros::Duration(0.005);
-    if (odomTime == odomTimeRec) odomTime += ros::Duration(dt);
+    if (odomTime == odomTimeRec) odomTime += ros::Duration(0.005);
 
-    // publish 100, 200(x)Hz odometry messages
+    // publish 200Hz odometry messages
     geometry_msgs::Quaternion geoQuat = tf::createQuaternionMsgFromRollPitchYaw(vehicleRoll, vehiclePitch, vehicleYaw);
 
     odomData.header.stamp = odomTime;
@@ -307,11 +308,10 @@ int main(int argc, char** argv)
     odomData.pose.pose.position.x = vehicleX;
     odomData.pose.pose.position.y = vehicleY;
     odomData.pose.pose.position.z = vehicleZ;
-    // odomData.twist.twist.angular.x = 200.0 * (vehicleRoll - vehicleRecRoll);
-    // odomData.twist.twist.angular.y = 200.0 * (vehiclePitch - vehicleRecPitch);
     odomData.twist.twist.angular.x = frequency * (vehicleRoll - vehicleRecRoll);
     odomData.twist.twist.angular.y = frequency * (vehiclePitch - vehicleRecPitch);
-
+    // odomData.twist.twist.angular.x = 200.0 * (vehicleRoll - vehicleRecRoll);
+    // odomData.twist.twist.angular.y = 200.0 * (vehiclePitch - vehicleRecPitch);
     odomData.twist.twist.angular.z = vehicleYawRate;
     odomData.twist.twist.linear.x = vehicleSpeed;
     // odomData.twist.twist.linear.z = 200.0 * (vehicleZ - vehicleRecZ);
